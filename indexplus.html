@@ -1,0 +1,82 @@
+<!doctype html>
+<meta charset="utf-8">
+ 
+<script src="js/d3.js"></script>
+<script src="js/d3plus.js"></script>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+
+<div id="viz"></div>
+ 
+<script>
+    
+    var links, nodes;
+    var edgeOpacities = {   'S': 0.4,
+                            'R': 0.2,
+                            'O': 0.1
+                        };
+    
+    d3.json("links.json", function(graph) {
+        
+        links = graph.links;
+        nodes = {};
+        
+        // Compute the distinct nodes from the links.
+        links.forEach(function(link) {
+            addNode(link.source, link, link.target);
+            addNode(link.target, link, link.source);
+            
+        });
+
+        
+        var visualization = d3plus.viz()
+        .container("#viz")
+        .type("rings")
+        .dev(true)
+        .edges({
+            "color": "#AAA",
+            "opacity": function(d) {
+                return edgeOpacities[d.type];
+            },
+            "value": links,
+        })
+        .data(d3.values(nodes))
+        .tooltip({
+            "html": function(d) {
+                var neighbors = nodes[d].neighbors;
+                var html = "<table class='table table-striped'>";
+                html = html + "<tr><th>Name</th><th>Type</th><th>Episode</th></tr>";
+                neighbors.forEach(function(n) {
+                    html = html + "<tr><td>" + n.name + "</td><td>" + n.link.type + "</td><td>" + n.link.episode + "</td></tr>";
+                });
+                html = html + "</table>";
+                return html;
+            },
+            "connections": false,
+            "large": 350
+        })
+        .size("degree")
+        .id("name")
+        .focus("Sterling Archer")
+        .draw();
+    });
+    
+    function addNode(n, link, m) {
+        if (!(n in nodes)) {
+            nodes[n] = {};
+            nodes[n].name = n;
+            nodes[n].degree = 1;
+            nodes[n].neighbors = [ {"name": m, "link": link} ];
+        }
+        else {
+            nodes[n].degree += 1;
+            nodes[n].neighbors.push({"name": m, "link": link});
+        }
+    }
+
+</script>
