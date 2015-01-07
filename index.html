@@ -8,8 +8,13 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
 <!-- Optional theme -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
-<!-- Latest compiled and minified JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+
+<style>
+    #viz { 
+        min-height: 600px;
+        min-width: 780px;
+    }
+</style>
 
 <div id="viz"></div>
  
@@ -57,11 +62,18 @@
                 return html;
             },
             "connections": false,
-            "large": 300
+            "large": 280
         })
         .size("degree")
         .id("name")
         .focus("Sterling Archer")
+        .title({
+            "value": "A visualization of every shown or implied relationship between the character's of the FX show Archer. Will be updated occasionally as I catch up with new episodes. Click this footer for code and corrections. ©2015 David Lee",
+            "position": "bottom",
+            "link": "https://github.com/david733/archernet",
+            "font": {"size": 10},
+//             "padding": 5,
+        })
         .draw();
     });
     
