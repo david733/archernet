@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+    
+<head>
+<style>
+
+    .link.sex path { stroke: red; }
+    
+    .link.relationship path { stroke: blue; }
+    
+    .link.other path { stroke: #696969;
+        stroke-dasharray: 2,1; }
+    
+    .link path {
+      stroke: #fff;
+      stroke-width: 2px;
+    }
+    
+    .link text {
+        font: 4px sans-serif;
+        pointer-events: none;
+        visibility: hidden;
+    }
+
+    .node circle {
+      stroke: #000;
+      stroke-width: 1px;
+    }
+
+    .node text {
+      font: 4px sans-serif;
+      pointer-events: none;
+    }
+    
+    .background {
+        -webkit-opacity: 0.2;
+    }
+
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js"></script>
+<script>
+    var width = 600,
+        height = 600;
+        
+    var color = d3.scale.category20();
+
+    var radius = d3.scale.sqrt().range([0, 6]);
+    
+    var linktypes = { S: "sex", R: "relationship", O: "other" };
+    var node, link, nodes, links;
+        
+    var zoomer = d3.behavior.zoom()
+        .scaleExtent([1, 20])
+        .size([width, height])
+        .on("zoom", zoom);
+        
+    function zoom() {
+        svg.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+    }
+
+    var svg = d3
+        .select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .call(zoomer);
+        
+    var rect = svg.append("rect")
+        .attr("width", width*5)
+        .attr("height", height*5)
+        .style("fill", "none")
+        .style("pointer-events", "all");
+    
+    rect.on('click', unblurNodes);
+    
+    // define arrow markers for graph links
+/*    svg.append('svg:defs').append('svg:marker')
+        .attr('id', 'marker_circle')
+        .attr('viewBox', '-6 -6 12 12')
+        .attr('markerWidth', 5)
+        .attr('markerHeight', 5)
+        .attr('refX', 0)
+        .attr('refY', 0)
+        .attr('orient', 'auto')
+      .append('svg:path')
+        .attr('d', 'M 0, 0  m -5, 0  a 5,5 0 1,0 10,0  a 5,5 0 1,0 -10,0')
+        .attr('fill', '#000'); */
+        
+    svg.append("g");
+
+    var force = d3.layout.force()
+        .size([width, height])
+        .charge(-500)
+        .linkDistance(30)
+        .linkStrength(0.7)
+        .gravity(0.2);
+    
+    d3.json("links.json", function(graph) {
+        links = graph.links;
+        nodes = {};
+        
+        // Compute the distinct nodes from the links.
+        links.forEach(function(link) {
+            link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
+            link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+        });
+                
+        force.nodes(d3.values(nodes))
+            .links(links)
+            .on("end", end)
+            .start();
+        
+        link = svg.selectAll(".link")
+            .data(links)
+            .enter().append("g")
+            .attr("class", function(d) { return "link " + linktypes[d.type]; } );
+        
+        link.append("path")
+            .attr("fill", "none");
+//             .attr('marker-start', 'url(#marker_circle)')
+//             .attr('marker-end', 'url(#marker_circle)');
+             
+        link.append("text");
+
+        node = svg.selectAll(".node")
+            .data(d3.values(nodes))
+            .enter().append("g")
+            .attr("class", "node")
+            .on('click', function(d, i) { selectNode(d, i, d3.select(this)) });
+
+        node.append("circle");
+
+        node.append("text");
+
+        function end() {
+            link.selectAll("path")
+                .attr("d", linkArc);
+            
+            link.selectAll("text")
+                .attr("dy", "0px")
+                .attr("text-anchor", "middle")
+                .text(function(d) { return d.episode; })
+                .attr("transform", linkMidpoint);
+
+            node.selectAll("circle")
+                .attr("r", function(d) { return Math.sqrt(d.weight) * 5; })
+                .style("fill", function(d) { return color(); })
+                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+          
+            node.selectAll("text")
+                .attr("dy", "0px")
+                .attr("text-anchor", "middle")
+                .text(function(d) { return d.name; })
+                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        }
+
+    });
+    
+    function linkArc(d) {
+        var dx = d.target.x - d.source.x,
+            dy = d.target.y - d.source.y,
+            dr = Math.sqrt(dx * dx + dy * dy);
+        return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+    }
+    
+    function linkMidpoint(d) {
+        return "translate(" + (d.target.x + d.source.x) / 2 + "," + (d.target.y + d.source.y) / 2 + ")";
+    }
+    
+    function blurNodes() {
+        node.attr("class", "node background");
+        link.attr("class", function(d) { return "link background " + linktypes[d.type]; } );
+    }
+    
+    function unblurNodes() {
+        node.attr("class", "node");
+        link.attr("class", function(d) { return "link " + linktypes[d.type]; } );
+    }
+    
+    function selectNode(d,i,t) {
+        var neighbors = [];
+        blurNodes();
+        t.attr("class", "node");
+        link.filter(function(_d) { return _d.source.index == i || _d.target.index == i; })
+            .attr("class", function(d) { return "link " + linktypes[d.type]; })
+            .each(function(d) {
+//                 console.log(d.source.index + " " + d.target.index);
+                if (d.source.index == i) neighbors.push(d.target.index);
+                else neighbors.push(d.source.index);
+            });
+//         console.log(neighbors);
+        node.filter(function(_d) { return neighbors.indexOf(_d.index) != -1 })
+            .attr("class", "node");
+    }
+    </script>
+</body>
+
+</html>
