@@ -27,6 +27,7 @@
 </head>
 <body>
 <div id="viz"></div>
+<img src="ScreenClip.png" style="display: none" />
 <script>
     
     var links, nodes;
@@ -50,7 +51,7 @@
         var visualization = d3plus.viz()
         .container("#viz")
         .type("rings")
-        .dev(true)
+        .dev(false)
         .edges({
             "color": "#AAA",
             "opacity": function(d) {
