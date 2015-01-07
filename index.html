@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
- 
+<head>
+    <title>ARCHER NET</title>
 <script src="js/d3.js"></script>
 <script src="js/d3plus.js"></script>
 
@@ -10,12 +11,16 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
 
 <style>
+    html, body { height: 100% }
+    
     #viz { 
+        height: 95%;
         min-height: 600px;
         min-width: 780px;
     }
 </style>
-
+</head>
+<body>
 <div id="viz"></div>
  
 <script>
@@ -72,7 +77,6 @@
             "position": "bottom",
             "link": "https://github.com/david733/archernet",
             "font": {"size": 10},
-//             "padding": 5,
         })
         .draw();
     });
@@ -91,3 +95,5 @@
     }
 
 </script>
+    
+</body>
